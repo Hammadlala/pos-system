@@ -1,0 +1,89 @@
+// use prisma-next
+
+enum Role {
+  ADMIN
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+}
+
+enum OrderStatus {
+  COMPLETED
+  CANCELLED
+}
+
+enum InventoryType {
+  RESTOCK
+  SALE
+  ADJUSTMENT
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CASHIER)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt temporal.updatedAt()
+}
+
+model Product {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  price                 Decimal
+  stock                 Int                    @default(0)
+  lowStockThreshold     Int                    @default(5)
+  category              Category               @relation(fields: [categoryId], references: [id])
+  categoryId            Int
+  orderItems            OrderItem[]
+  inventoryTransactions InventoryTransaction[]
+  createdAt             DateTime               @default(now())
+  updatedAt             temporal.updatedAt()
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  cashier       User          @relation(fields: [cashierId], references: [id])
+  cashierId     Int
+  total         Decimal
+  paymentMethod PaymentMethod
+  amountPaid    Decimal?
+  change        Decimal?
+  status        OrderStatus   @default(COMPLETED)
+  items         OrderItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     temporal.updatedAt()
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  price     Decimal
+}
+
+model InventoryTransaction {
+  id        Int           @id @default(autoincrement())
+  product   Product       @relation(fields: [productId], references: [id])
+  productId Int
+  type      InventoryType
+  quantity  Int
+  note      String?
+  createdAt DateTime      @default(now())
+}
